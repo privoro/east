@@ -575,4 +575,46 @@ describe('migrator', function() {
 		});
 
 	});
+
+
+	describe('reset _seeds status table in migration prerequisite', function() {
+		it('execute migration without errors', function(done) {
+			Steppy(
+				function() {
+					// set the migrations table to _seeds
+					migrator.adapter.migrationTable === '_seeds';
+					this.pass(null);
+				}
+				function() {
+					migrator.loadMigration(names[0], this.slot());
+				},
+				function(err, migration) {
+					migrator.migrate(migration, this.slot());
+				},
+				done
+			);
+		});
+
+		it('perform migration prerequisite and get executed migration names, should return empty list', function(done) {
+			Steppy(
+				function() {
+					migrator.migrationPrerequisite(this.slot());
+				},
+				function() {
+					migrator.adapter.getExecutedMigrationNames(this.slot());
+				},
+				function(err, executedNames) {
+					expect(executedNames).eql([]);
+					this.pass(null);
+				},
+				function() {
+					// set the migrations table back to _migrations
+					migrator.adapter.migrationTable === '_migrations';
+					this.pass(null);
+				},
+				done
+			);
+		});
+
+	});
 });
