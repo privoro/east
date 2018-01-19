@@ -6,6 +6,12 @@ var expect = require('expect.js'),
 	Steppy = require('twostep').Steppy,
 	utils = require('../lib/utils');
 
+
+var chai = require("chai");
+var sinon = require("sinon");
+chai.use(require("sinon-chai"));
+var chaiExpect = chai.expect;
+
 describe('migrator', function() {
 	var migrator = new Migrator();
 
@@ -576,45 +582,38 @@ describe('migrator', function() {
 
 	});
 
-
 	describe('reset _seeds status table in migration prerequisite', function() {
-		it('execute migration without errors', function(done) {
-			Steppy(
-				function() {
-					// set the migrations table to _seeds
-					migrator.adapter.migrationTable === '_seeds';
-					this.pass(null);
-				}
-				function() {
-					migrator.loadMigration(names[0], this.slot());
-				},
-				function(err, migration) {
-					migrator.migrate(migration, this.slot());
-				},
-				done
-			);
-		});
+		it('call resetExecuted if the migrationTable is _seeds', function(done) {
+			var callback = sinon.spy();
+			migrator.adapter.config = {};
+			migrator.adapter.resetExecuted = sinon.stub().returns(null);
+			migrator.adapter.config.migrationTable = '_seeds';
 
-		it('perform migration prerequisite and get executed migration names, should return empty list', function(done) {
-			Steppy(
-				function() {
-					migrator.migrationPrerequisite(this.slot());
-				},
-				function() {
-					migrator.adapter.getExecutedMigrationNames(this.slot());
-				},
-				function(err, executedNames) {
-					expect(executedNames).eql([]);
-					this.pass(null);
-				},
-				function() {
-					// set the migrations table back to _migrations
-					migrator.adapter.migrationTable === '_migrations';
-					this.pass(null);
-				},
-				done
-			);
-		});
+			migrator.migrationPrerequisite(callback);
 
+            chaiExpect(migrator.adapter.resetExecuted).to.be.calledOnce
+                .calledWithExactly(callback);
+            done();
+		});	
+
+		it('should not call resetExecuted if the migrationTable is _migrations', function(done) {
+			var callback = sinon.spy();
+			migrator.adapter.config = {};
+			migrator.adapter.resetExecuted = sinon.stub().returns(null);
+			migrator.adapter.config.migrationTable = '_migrations';
+
+			migrator.migrationPrerequisite(callback);
+
+            chaiExpect(migrator.adapter.resetExecuted).to.not.be.called;
+            done();
+		});	
+
+		it('perform nothing if adapter does not have mysql config', function(done) {
+			var callback = sinon.spy();
+			migrator.migrationPrerequisite(callback);
+            chaiExpect(migrator.adapter.resetExecuted).to.not.be.called;
+            done();
+		});	
 	});
+
 });
