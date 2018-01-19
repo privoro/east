@@ -582,38 +582,27 @@ describe('migrator', function() {
 
 	});
 
-	describe('reset _seeds status table in migration prerequisite', function() {
-		it('call resetExecuted if the migrationTable is _seeds', function(done) {
+	describe('call beforeMigration method of adapter if available', function() {
+		it('call beforeMigration method of adapter', function(done) {
 			var callback = sinon.spy();
-			migrator.adapter.config = {};
-			migrator.adapter.resetExecuted = sinon.stub().returns(null);
-			migrator.adapter.config.migrationTable = '_seeds';
+			migrator.adapter.beforeMigration = sinon.stub();
 
-			migrator.migrationPrerequisite(callback);
+			migrator.beforeMigration(callback);
 
-            chaiExpect(migrator.adapter.resetExecuted).to.be.calledOnce
+            chaiExpect(migrator.adapter.beforeMigration).to.be.calledOnce
                 .calledWithExactly(callback);
             done();
 		});	
 
-		it('should not call resetExecuted if the migrationTable is _migrations', function(done) {
+		it('should not call beforeMigration method of adapter', function(done) {
 			var callback = sinon.spy();
-			migrator.adapter.config = {};
-			migrator.adapter.resetExecuted = sinon.stub().returns(null);
-			migrator.adapter.config.migrationTable = '_migrations';
+			migrator.adapter.beforeMigration = null;
 
-			migrator.migrationPrerequisite(callback);
-
-            chaiExpect(migrator.adapter.resetExecuted).to.not.be.called;
+			migrator.beforeMigration(callback);
+            chaiExpect(callback).to.be.calledOnce;
             done();
 		});	
 
-		it('perform nothing if adapter does not have mysql config', function(done) {
-			var callback = sinon.spy();
-			migrator.migrationPrerequisite(callback);
-            chaiExpect(migrator.adapter.resetExecuted).to.not.be.called;
-            done();
-		});	
 	});
 
 });
