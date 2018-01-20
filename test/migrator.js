@@ -6,6 +6,12 @@ var expect = require('expect.js'),
 	Steppy = require('twostep').Steppy,
 	utils = require('../lib/utils');
 
+
+var chai = require("chai");
+var sinon = require("sinon");
+chai.use(require("sinon-chai"));
+var chaiExpect = chai.expect;
+
 describe('migrator', function() {
 	var migrator = new Migrator();
 
@@ -575,4 +581,28 @@ describe('migrator', function() {
 		});
 
 	});
+
+	describe('call beforeMigration method of adapter if available', function() {
+		it('call beforeMigration method of adapter', function(done) {
+			var callback = sinon.spy();
+			migrator.adapter.beforeMigration = sinon.stub();
+
+			migrator.beforeMigration(callback);
+
+            chaiExpect(migrator.adapter.beforeMigration).to.be.calledOnce
+                .calledWithExactly(callback);
+            done();
+		});	
+
+		it('should not call beforeMigration method of adapter', function(done) {
+			var callback = sinon.spy();
+			migrator.adapter.beforeMigration = null;
+
+			migrator.beforeMigration(callback);
+            chaiExpect(callback).to.be.calledOnce;
+            done();
+		});	
+
+	});
+
 });

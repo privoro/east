@@ -1,1 +1,4 @@
 node_modules/
+
+# Users Environment Variables
+.idea/
